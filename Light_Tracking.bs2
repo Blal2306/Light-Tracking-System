@@ -1,0 +1,119 @@
+'AUTHOR:  Zafar, Blal
+'CLASS: MAC 265 # 8230
+'DATE: AUGUST 7, 2011
+'THEME: Light tracking system
+
+
+' {$STAMP BS2}
+' {$PBASIC 2.5}
+
+counter VAR Word
+
+time1 VAR Word
+time2 VAR Word
+
+defaultPosition VAR Word      'holds the current position of the servo motor
+defaultPosition = 500
+
+increment CON 46              'Steps the servo motor will move at a time
+
+leftSafe CON 200+increment    'Prevents servo motor from exceeding its mechanical limit on the left turn
+rightSafe CON 1100-increment  'Prevents servo motor from exceeding its mechanical limit on the right turn
+
+errorRange CON 35             'How accurately servo will follow the light
+
+pauseDuration CON 1           'How long to pause after every move
+pulses CON 1                  'How many pulses to send on every move
+
+DO
+
+main:
+
+  HIGH 0                      'Start Charging capicators
+  HIGH 1
+
+  PAUSE 10
+
+  RCTIME 0, 1, time1          'Discharge the capicators
+  RCTIME 1, 1, time2
+
+  DEBUG CLS, "TIME 1 = " , DEC5 time1, "  TIME 2 = ", DEC5 time2, CR              'Display the time of discharge
+
+  IF (time1 > time2) THEN                                                         'Makes the servo with in a range of accuracy
+    IF ((time1 - time2) < = errorRange) THEN
+      DEBUG "Not enough difference with error of ", DEC errorRange, " GOING TO MAIN ....", CR
+      GOTO main
+    ENDIF
+  ENDIF
+
+  IF (time2 > time1)  THEN
+    IF ((time2 - time1) < = errorRange) THEN
+      DEBUG "NOT enough difference with error of ", DEC errorRange, " GOING TO MAIN ....", CR
+      GOTO main
+    ENDIF
+  ENDIF
+
+
+  IF (time1 > time2) THEN          'LEFT TURN
+
+
+
+    IF (defaultPosition <= leftSafe) THEN     'Doesn't let the servo exceed its limit
+      DEBUG "Can't turn left any more, because default position is ", DEC defaultPosition, CR
+
+      FOR counter = 1 TO 50
+        PULSOUT 14, defaultPosition
+        PAUSE 7
+      NEXT
+
+      GOTO main
+    ENDIF
+
+    DEBUG "TURNING LEFT  ......", CR
+    DEBUG "DEFAULT POSITION = ", DEC defaultPosition, CR
+
+
+
+    FOR counter = 1 TO pulses
+      PULSOUT 14, defaultPosition
+      PAUSE pauseDuration
+    NEXT
+
+  defaultPosition = defaultPosition-increment         'Subtract the increment value after the move is made
+
+  ENDIF
+
+
+
+
+
+  IF (time2 > time1) THEN 'RIGHT TURN
+
+
+
+    IF (defaultPosition >= rightSafe) THEN            'Doesn't let the servo exceed its limit
+      DEBUG "Can't turn right any more, because default position is ", DEC defaultPosition, CR
+
+      FOR counter = 1 TO 50
+        PULSOUT 14, defaultPosition
+        PAUSE 7
+      NEXT
+
+      GOTO main
+    ENDIF
+
+    DEBUG "TURNING RIGHT .....", CR
+    DEBUG "DEFAULT POSITION = ", DEC defaultPosition, CR
+
+
+
+    FOR counter = 1 TO pulses
+      PULSOUT 14, defaultPosition
+      PAUSE pauseDuration
+    NEXT
+
+    defaultPosition = defaultPosition + increment     'Add the increment value after the move is made
+
+  ENDIF
+
+LOOP
